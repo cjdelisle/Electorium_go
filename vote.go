@@ -149,35 +149,50 @@ func orderByTotalIndirect(cand []candidate, totalWillingCandidates int) *candida
 	return last
 }
 
-func computeRingMembers(ring []*candidate) [][]*candidate {
-	visited := make(map[string]int)
-	var out [][]*candidate
-outer:
-	for _, c := range ring {
-		if _, ok := visited[c.vote.VoteFor]; ok {
-			// Already seen
-			continue
+type ringComputer struct {
+	rings       [][]*candidate
+	unorganized []*candidate
+}
+
+func (rc *ringComputer) removeFromUnorganized(cand *candidate) bool {
+	for i, c := range rc.unorganized {
+		if c == cand {
+			rc.unorganized[i] = rc.unorganized[len(rc.unorganized)-1]
+			rc.unorganized = rc.unorganized[0 : len(rc.unorganized)-1]
+			return true
 		}
-		if c.voteFor == nil {
-		} else if i, ok := visited[c.vote.VoterId]; ok {
-			// Mapped to a ring based on who they voted for
-			out[i] = append(out[i], c)
-			visited[c.vote.VoteFor] = i
-			continue
-		}
-		for _, vfm := range c.votedForMe {
-			if i, ok := visited[vfm.vote.VoterId]; ok {
-				// Mapped to a ring based on who voted for them
-				out[i] = append(out[i], c)
-				visited[c.vote.VoteFor] = i
-				continue outer
-			}
-		}
-		// No ring can be mapped, make a new one
-		visited[c.vote.VoteFor] = len(out)
-		out = append(out, []*candidate{c})
 	}
-	return out
+	return false
+}
+func (rc *ringComputer) addToRingForward(ringN int, cand *candidate) {
+	if cand == nil {
+		return
+	}
+	if !rc.removeFromUnorganized(cand) {
+		return
+	}
+	rc.rings[ringN] = append(rc.rings[ringN], cand)
+	rc.addToRingForward(ringN, cand.voteFor)
+}
+func (rc *ringComputer) addToRingReverse(ringN int, cand *candidate) {
+	for _, c := range cand.votedForMe {
+		if rc.removeFromUnorganized(c) {
+			rc.rings[ringN] = append(rc.rings[ringN], c)
+			rc.addToRingReverse(ringN, c)
+		}
+	}
+}
+func computeRingMembers(ring []*candidate) [][]*candidate {
+	rc := ringComputer{}
+	rc.unorganized = append(rc.unorganized, ring...)
+	for len(rc.unorganized) > 0 {
+		n := len(rc.rings)
+		rc.rings = append(rc.rings, make([]*candidate, 0))
+		c := rc.unorganized[0]
+		rc.addToRingForward(n, c)
+		rc.addToRingReverse(n, c)
+	}
+	return rc.rings
 }
 
 func getBestCandidates(
