@@ -192,6 +192,15 @@ func getBestCandidates(
 		}
 	}
 	members := computeRingMembers(bestRing)
+	if verbose {
+		fmt.Printf("Best ring made up of %d distinct rings:\n", len(members))
+		for i, m := range members {
+			fmt.Printf("  - %d:\n", i)
+			for _, mm := range m {
+				fmt.Printf("    - %s\n", mm.vote.VoterId)
+			}
+		}
+	}
 	return bestRing, len(members)
 }
 
