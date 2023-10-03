@@ -150,25 +150,32 @@ func orderByTotalIndirect(cand []candidate, totalWillingCandidates int) *candida
 }
 
 func computeRingMembers(ring []*candidate) [][]*candidate {
+	visited := make(map[string]int)
 	var out [][]*candidate
 outer:
 	for _, c := range ring {
-		for i, ring := range out {
-			if slices.Contains(ring, c) {
-				continue outer
-			}
-			if c.voteFor != nil && slices.Contains(ring, c.voteFor) {
+		if _, ok := visited[c.vote.VoteFor]; ok {
+			// Already seen
+			continue
+		}
+		if c.voteFor == nil {
+		} else if i, ok := visited[c.vote.VoterId]; ok {
+			// Mapped to a ring based on who they voted for
+			out[i] = append(out[i], c)
+			visited[c.vote.VoteFor] = i
+			continue
+		}
+		for _, vfm := range c.votedForMe {
+			if i, ok := visited[vfm.vote.VoterId]; ok {
+				// Mapped to a ring based on who voted for them
 				out[i] = append(out[i], c)
+				visited[c.vote.VoteFor] = i
 				continue outer
 			}
 		}
-		var ring []*candidate
-		nextC := c
-		for nextC != nil && !slices.Contains(ring, nextC) {
-			ring = append(ring, nextC)
-			nextC = nextC.voteFor
-		}
-		out = append(out, ring)
+		// No ring can be mapped, make a new one
+		visited[c.vote.VoteFor] = len(out)
+		out = append(out, []*candidate{c})
 	}
 	return out
 }
