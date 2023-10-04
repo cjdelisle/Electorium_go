@@ -172,6 +172,7 @@ func (rc *ringComputer) addToRingForward(ringN int, cand *candidate) {
 	if !rc.removeFromUnorganized(cand) {
 		return
 	}
+	rc.addToRingReverse(ringN, cand)
 	rc.rings[ringN] = append(rc.rings[ringN], cand)
 	rc.addToRingForward(ringN, cand.voteFor)
 }
@@ -191,7 +192,6 @@ func computeRingMembers(ring []*candidate) [][]*candidate {
 		rc.rings = append(rc.rings, make([]*candidate, 0))
 		c := rc.unorganized[0]
 		rc.addToRingForward(n, c)
-		rc.addToRingReverse(n, c)
 	}
 	return rc.rings
 }
