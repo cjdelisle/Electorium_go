@@ -60,6 +60,10 @@ func MkFuzz(verbose bool) Fuzz {
 	}
 }
 
+func (f Fuzz) Destroy() {
+	C.electorium_fuzz_destroy(f.cFuzz)
+}
+
 func (f *Fuzz) FuzzCompare(data []byte, verbose bool) {
 	if verbose {
 		fmt.Println("Generating votes")
@@ -68,7 +72,8 @@ func (f *Fuzz) FuzzCompare(data []byte, verbose bool) {
 	if verbose {
 		fmt.Println("Votes")
 		for _, v := range votes {
-			fmt.Printf("  - %s %d %s\n", v.VoterId, v.NumberOfVotes, v.VoteFor)
+			fmt.Printf("  - %s %d %s (willing: %v)\n",
+				v.VoterId, v.NumberOfVotes, v.VoteFor, v.WillingCandidate)
 		}
 	}
 	if verbose {

@@ -21,4 +21,5 @@ func FuzzVsRust(f *testing.F) {
 	f.Fuzz(func(t *testing.T, input []byte) {
 		fuzz.FuzzCompare(input, verbose)
 	})
+	fuzz.Destroy()
 }

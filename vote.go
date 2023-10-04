@@ -120,7 +120,9 @@ func computeDelegatedVotes(cand []candidate, verbose bool) {
 			delegationPath = append(delegationPath, voteFor)
 			voteFor.totalIndirectVotes += votes
 			if verbose {
-				fmt.Printf("  - Delegating to %s\n", voteFor.vote.VoterId)
+
+				fmt.Printf("  - Delegating to %s (new score: %d)\n",
+					voteFor.vote.VoterId, voteFor.totalIndirectVotes)
 			}
 			voteFor = voteFor.voteFor
 		}
@@ -134,7 +136,6 @@ func orderByTotalIndirect(cand []candidate, totalWillingCandidates int) *candida
 		if !c.willingCandidate {
 			panic("Non-willing candidate in beginning of list")
 		}
-		//fmt.Printf("c0 = %s\n", cand[i].vote.VoterId)
 		sortable = append(sortable, c)
 	}
 	sort.Slice(sortable, func(a, b int) bool {
